@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const path = require('path');
 const session = require('express-session');
+require('dotenv').config(); // Add this line
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,7 +18,7 @@ app.use(express.static(path.join(__dirname, 'src')));
 
 // Configure session middleware
 app.use(session({
-    secret: 'your_secret_key',
+    secret: process.env.SESSION_SECRET, // Use the session secret from .env.example
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }  // Change to true if using HTTPS
@@ -25,10 +26,10 @@ app.use(session({
 
 // Configure MySQL database connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'dbpassword',
-    database: 'chat_app'
+    host: process.env.DB_HOST, // Use database host from .env.example
+    user: process.env.DB_USER, // Use database user from .env.example
+    password: process.env.DB_PASSWORD, // Use database password from .env.example
+    database: process.env.DB_NAME // Use database name from .env.example
 });
 
 db.connect((err) => {
