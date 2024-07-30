@@ -4,7 +4,9 @@ const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const path = require('path');
 const session = require('express-session');
-require('dotenv').config(); // Add this line
+
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -176,6 +178,7 @@ app.post('/message', authenticateUser, (req, res) => {
         });
     });
 });
+
 
 
 app.get('/admin/users-with-messages', authenticateAdmin, async (req, res) => {
