@@ -18,6 +18,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files (for styles.css and scripts.js)
 app.use(express.static(path.join(__dirname, 'src')));
 
+
+
 // Configure session middleware
 app.use(session({
     secret: process.env.SESSION_SECRET, // Use the session secret from .env.example
@@ -42,7 +44,7 @@ db.connect((err) => {
 // Route to serve the pages
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'login.html'));
+    res.sendFile(path.join(__dirname, 'src', 'form.html'));
 });
 
 app.get('/login', (req, res) => {
@@ -57,38 +59,85 @@ app.get('/admin', authenticateAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'admin.html'));
 });
 
-app.get('/chat', authenticateUser, (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'chat.html'));
+// Route to serve the chat page
+// Route to serve chat page or authentication page
+app.get('/chat', (req, res) => {
+    if (req.session.isAuthenticated) {
+        res.sendFile(path.join(__dirname, 'src', 'chat.html'));
+    } else {
+        res.redirect('/authenticate');
+    }
 });
+
+// Route to serve the authentication page
+app.get('/authenticate', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'authenticate.html'));
+});
+
+// Route for user authentication
+// Route for user authentication
+app.post('/authenticate', (req, res) => {
+    const { email } = req.body;
+    const query = 'SELECT * FROM users WHERE username = ?';
+    db.query(query, [email], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Error during authentication.' });
+        if (results.length > 0) {
+            // User exists, set session and redirect
+            req.session.isAuthenticated = true;
+            req.session.username = email;
+            req.session.userId = results[0].id;
+            res.status(200).json({ message: 'Authenticated successfully.' });
+        } else {
+            // User does not exist
+            res.status(401).json({ message: 'Email not registered.' });
+        }
+    });
+});
+
+
+
 
 
 // Route for user registration
 app.post('/register', (req, res) => {
-    const { username, password, confirm_password } = req.body;
-    if (password !== confirm_password) {
-        return res.status(400).json({ message: 'Passwords do not match.' });
-    }
-    const hashedPassword = bcrypt.hashSync(password, 8);
+    const { name, email, agency, problemDescription } = req.body;
 
-    const query = 'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)';
-    db.query(query, [username, hashedPassword, 'USER_ROLE'], (err, result) => {
+    // Check if all required fields are provided
+    if (!name || !email || !agency || !problemDescription) {
+        return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    // Insert the user into the users table
+    const query = 'INSERT INTO users (username, role) VALUES (?, ?)';
+    db.query(query, [email, 'USER_ROLE'], (err, result) => {
         if (err) {
+            console.error('Database error during user insertion:', err); // Log detailed error
             if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(400).json({ message: 'Username already exists.' });
+                return res.status(400).json({ message: 'Email already exists.' });
             }
             return res.status(500).json({ message: 'Error during registration.' });
         }
 
-        req.session.isAuthenticated = true;
-        req.session.username = username;
-        req.session.userId = result.insertId;
-        
+        const userId = result.insertId;
 
-        res.status(201).json({ message: 'User registered successfully.' });
+        // Insert the initial message into the messages table
+        const messageQuery = 'INSERT INTO messages (user_id, message, sender) VALUES (?, ?, ?)';
+        db.query(messageQuery, [userId, problemDescription, 'user'], (err) => {
+            if (err) {
+                console.error('Database error during message insertion:', err); // Log detailed error
+                return res.status(500).json({ message: 'Error inserting initial message.' });
+            }
+
+            // Successful registration and message insertion
+            req.session.isAuthenticated = true;
+            req.session.username = email;
+            req.session.userId = userId;
+
+            res.status(201).json({ message: 'User registered and message added successfully.' });
+        });
     });
 });
 
-const fs = require('fs');
 
 // Route for user login
 app.post('/login', (req, res) => {
