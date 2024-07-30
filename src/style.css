@@ -1,0 +1,36 @@
+/* Ensure the main layout area has a fixed size */
+main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+    max-height: 100vh; /* Prevent overflow */
+    margin-left: 20rem; /* Adjust based on sidebar width */
+}
+
+/* Ensure the chat area does not overlap */
+#chat {
+    flex-grow: 1; /* Take up remaining space */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Enable scrolling for long messages */
+    padding: 1rem; /* Add padding for spacing */
+}
+
+/* Ensure messages container does not overlap */
+#messagesContainerAdmin {
+    overflow-y: auto;
+    max-height: calc(100vh - 5rem); /* Adjust based on header and footer height */
+}
+
+/* Message bubbles should not expand beyond the container */
+.message {
+    max-width: 100%; /* Prevent messages from expanding beyond container width */
+    word-wrap: break-word; /* Ensure long words break correctly */
+    overflow-wrap: break-word; /* For better compatibility */
+}
+
+/* Specific styles for large messages */
+.message {
+    overflow: hidden; /* Hide any overflowing content */
+    text-overflow: ellipsis; /* Show ellipsis for very long messages */
+}

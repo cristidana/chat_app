@@ -82,6 +82,7 @@ app.post('/register', (req, res) => {
         req.session.isAuthenticated = true;
         req.session.username = username;
         req.session.userId = result.insertId;
+        
 
         res.status(201).json({ message: 'User registered successfully.' });
     });
