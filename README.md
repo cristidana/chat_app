@@ -52,13 +52,14 @@ cp .env.example .env
 ### Set Up the Database:
 ```bash
 npm run setup-db
+# Password from .env
 ```
 
 ### Start the Application:
 ```bash
-#For development:
+# For development:
 npm run dev
 
-#For production:
+# For production:
 npm start
 ```
